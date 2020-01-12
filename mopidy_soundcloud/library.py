@@ -4,7 +4,7 @@ import re
 import urllib.parse
 
 from mopidy import backend, models
-from mopidy.models import SearchResult, Track
+from mopidy.models import SearchResult, Track, Image
 from mopidy_soundcloud.soundcloud import safe_url
 
 logger = logging.getLogger(__name__)
@@ -157,3 +157,15 @@ class SoundCloudLibraryProvider(backend.LibraryProvider):
         except Exception as error:
             logger.error(f"Failed to lookup {uri}: {error}")
             return []
+
+    def get_images(self, uris):
+        images = {}
+        for uri in uris:
+            if uri.startswith("soundcloud:song/"):
+                track_id = self.backend.remote.parse_track_uri(uri)
+                imguri = self.backend.remote.get_track_image(track_id)
+                if imguri is not None:
+                    image = Image(uri=imguri)
+                    images[uri] = [image]
+
+        return images

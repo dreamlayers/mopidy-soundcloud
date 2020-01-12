@@ -232,7 +232,19 @@ class SoundCloudClient:
     def get_track(self, track_id, streamable=False):
         logger.debug("Getting info for track with ID {track_id}")
         try:
-            return self.parse_track(self._get(f"tracks/{track_id}"), streamable)
+            return self.parse_track(self._get_track_data(track_id), streamable)
+        except Exception:
+            return None
+
+    def get_track_image(self, track_id):
+        try:
+            data = self._get_track_data(track_id)
+            image = data.get("artwork_url")
+            if image is None:
+                image = data.get("user", {}).get("avatar_url")
+            if image is not None:
+                image = image.replace("large", "t500x500")
+            return image
         except Exception:
             return None
 
@@ -290,6 +302,10 @@ class SoundCloudClient:
             else:
                 logger.error(f"SoundCloud API request failed: {e}")
         return {}
+
+    @cache()
+    def _get_track_data(self, track_id):
+        return self._get(f"tracks/{track_id}")
 
     def sanitize_tracks(self, tracks):
         return [t for t in tracks if t]
